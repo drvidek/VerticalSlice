@@ -2,9 +2,11 @@ using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(Animator))]
 public abstract class Agent : MonoBehaviour
 {
     public enum State { Idle, Prone, Walk, Jump, AttackLight, AttackHeavy, AttackJump, Parry, Dead }
+    #region Variables
     [SerializeField] protected State _currentState;
     [SerializeField] protected Meter _healthMeter;
     [SerializeField] protected Meter _parryMeter;
@@ -16,12 +18,48 @@ public abstract class Agent : MonoBehaviour
     [SerializeField] protected Animator _animator;
 
     [SerializeField] private float _isGroundedDistance, _isGroundedRadius;
-    public bool IsGrounded => Physics2D.CircleCast(transform.position, _isGroundedRadius, Vector2.down, _isGroundedDistance, _groundLayer);
+
+    [SerializeField] protected float _facingDirection = 1;
 
     private WaitForFixedUpdate waitForFixedUpdate = new WaitForFixedUpdate();
+    #endregion
 
+    /// <summary>
+    /// Returns the current state of the agent
+    /// </summary>
+    public State CurrentState => _currentState;
+    /// <summary>
+    /// Returns the direction the agent is facing where 1 is right and -1 is left
+    /// </summary>
+    public Vector3 FacingDirection => _facingDirection * Vector3.right;
+    /// <summary>
+    /// Returns the agent's x coordinate
+    /// </summary>
+    public float X => transform.position.x;
+    /// <summary>
+    /// Returns the agent's y coordinate
+    /// </summary>
+    public float Y => transform.position.y;
+    /// <summary>
+    /// Returns gravity multiplied by fixed delta time
+    /// </summary>
     public float Gravity => _gravity * Time.fixedDeltaTime;
+    /// <summary>
+    /// Returns true if a circlecast finds a collision underneath the rigidbody on Ground Layer
+    /// </summary>
+    public bool IsGrounded => Physics2D.CircleCast(transform.position, _isGroundedRadius, Vector2.down, _isGroundedDistance, _groundLayer);
 
+
+
+    private void OnValidate()
+    {
+        if (_animator == null)
+            _animator = GetComponent<Animator>();
+        if (_collider == null)
+            _collider = GetComponent<Collider2D>();
+        if (_rigidbody == null)
+            _rigidbody = GetComponent<Rigidbody2D>();
+    }
 
     protected virtual void Start()
     {
@@ -30,7 +68,7 @@ public abstract class Agent : MonoBehaviour
         //sets the state to prone if parry power runs out
         _parryMeter.onMin += () => _currentState = State.Prone;
 
-        //_isGroundedDistance = _collider.bounds.extents.y + 0.01f;
+        _isGroundedDistance = _collider.bounds.extents.y / 2f + 0.01f;
         _isGroundedRadius = _collider.bounds.extents.x;
         NextState();
     }
@@ -288,6 +326,31 @@ public abstract class Agent : MonoBehaviour
     public virtual void Heal(float f)
     {
         _healthMeter.Adjust(f);
+    }
+
+    public virtual void ReduceStanima(float f)
+    {
+
+    }
+
+    /// <summary>
+    /// Returns true if this agent and otherAgent are facing opposite directions
+    /// </summary>
+    /// <param name="otherAgent"></param>
+    /// <returns></returns>
+    public bool IsFacing(Agent otherAgent)
+    {
+        return otherAgent.FacingDirection.x != FacingDirection.x &&   //agents are facing opposite directions
+            Mathf.Sign(otherAgent.X - X) == FacingDirection.x;   //agent is on the left side of otherAgent if facing right, and vice-versa
+    }
+
+    /// <summary>
+    /// Immediately change the agent's state
+    /// </summary>
+    /// <param name="state"></param>
+    protected void ChangeStateTo(State state)
+    {
+        _currentState = state;
     }
 
 }

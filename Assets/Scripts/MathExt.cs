@@ -2,10 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+public enum VectorValue { x, y, z };
 public class MathExt
 {
-   
-    
+
+
     /// <summary>
     /// Return a Vector3 from a string-formatted Vector 3, i.e. "(0,0,0)"
     /// </summary>
@@ -125,5 +127,23 @@ public class MathExt
     {
         float precision = Mathf.Max(1, Mathf.Pow(10, d));
         return Mathf.Ceil(f * precision) / precision;
+    }
+
+
+   
+    /// <summary>
+    /// Returns a vector based on a source vector, replacing a single value using enum VectorValue.x, .y, or .z
+    /// </summary>
+    /// <param name="source"></param>
+    /// <param name="value"></param>
+    /// <param name="vectorValue"></param>
+    /// <returns></returns>
+    public static Vector3 ReplaceVectorValue(Vector3 source, VectorValue vectorValue, float value)
+    {
+        return new Vector3(
+            vectorValue == VectorValue.x ? value : source.x,
+            vectorValue == VectorValue.y ? value : source.y,
+            vectorValue == VectorValue.z ? value : source.z
+            );
     }
 }
