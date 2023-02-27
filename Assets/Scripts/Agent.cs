@@ -10,7 +10,7 @@ public abstract class Agent : MonoBehaviour
     [SerializeField] protected State _currentState;
     [SerializeField] protected Meter _healthMeter;
     [SerializeField] protected Meter _parryMeter;
-    [SerializeField] protected float _walkSpeed, _jumpHeight, _gravity, _attackLightPower, _attackHeavyPower;
+    [SerializeField] protected float _walkSpeed, _jumpHeight, _gravity;
     [SerializeField] LayerMask _groundLayer;
     [Header("Components")]
     [SerializeField] protected Collider2D _collider;
@@ -328,9 +328,22 @@ public abstract class Agent : MonoBehaviour
         _healthMeter.Adjust(f);
     }
 
+    /// <summary>
+    /// Reduce the parry meter by f
+    /// </summary>
+    /// <param name="f"></param>
     public virtual void ReduceStanima(float f)
     {
+        _parryMeter.Adjust(-f);
+    }
 
+    /// <summary>
+    /// Increase the parry meter by f
+    /// </summary>
+    /// <param name="f"></param>
+    public virtual void IncreaseStanima(float f)
+    {
+        _parryMeter.Adjust(f);
     }
 
     /// <summary>

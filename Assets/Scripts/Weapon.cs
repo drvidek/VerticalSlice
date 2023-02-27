@@ -14,10 +14,6 @@ public class Weapon : MonoBehaviour
         _owner = GetComponentInParent<Agent>();
     }
 
-    public void ResetHitList()
-    {
-    }
-
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (clearHitList)
@@ -30,7 +26,16 @@ public class Weapon : MonoBehaviour
             if (agent.tag != tag && !_agentsHit.Contains(agent))
             {
                 _agentsHit.Add(agent);
-                agent.TakeDamage(_attackPower);
+
+                //if not parrying or facing the wrong way
+                if (agent.CurrentState != Agent.State.Parry || !agent.IsFacing(_owner))
+                {
+                    //take damage
+                    agent.TakeDamage(_attackPower);
+                    return;
+                }
+                //else reduce stanima
+                agent.ReduceStanima(_attackPower);
             }
         }
     }

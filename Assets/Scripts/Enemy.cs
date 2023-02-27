@@ -14,7 +14,7 @@ public class Enemy : Agent
 
     private void Update()
     {
-        Debug.Log($"Is grounded: {IsGrounded}");
+        _rigidbody.velocity = Vector3.zero;
     }
 
     protected override void Start()
@@ -104,7 +104,7 @@ public class Enemy : Agent
     }
     protected override void IdleExit()
     {
-        _animator.ResetTrigger("Idle");
+
     }
 
     #region Jump
