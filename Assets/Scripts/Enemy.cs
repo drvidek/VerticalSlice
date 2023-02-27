@@ -5,11 +5,16 @@ public class Enemy : Agent
     private Alarm nextStateAlarm;
     private Vector2 _moveDir;
     [Header("Enemy Behaviour")]
+    [Header("Sight Checks")]
     [SerializeField] private Transform SightOrigin;
     [SerializeField] private float _sightDistance;
+    [SerializeField] private LayerMask _playerLayer;
+    [Header("Ground Checks")]
     [SerializeField] private float _dropCheckMaxDistance;
     [SerializeField] private LayerMask _dropCheckLayer;
-    [SerializeField] private LayerMask _playerLayer;
+
+    private float _animTime;
+    private Weapon _weapon;
 
 
     private void Update()
@@ -26,15 +31,21 @@ public class Enemy : Agent
 
     protected override void AttackHeavyEnter()
     {
-        //throw new System.NotImplementedException();
+        _animator.SetTrigger("AttackEnter");
+        _animator.SetTrigger("AttackHeavy");
+        nextStateAlarm.Stop();
     }
     protected override void AttackHeavyStay()
     {
-        //throw new System.NotImplementedException();
+        if (MathExt.Roll(2) && _animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1)
+            ChangeStateTo(State.AttackLight);
     }
     protected override void AttackHeavyExit()
     {
-        //throw new System.NotImplementedException();
+        if (!Attacking)
+            _animator.SetTrigger("AttackExit");
+
+        _animator.ResetTrigger("AttackHeavy");
     }
 
     protected override void AttackJumpEnter()
@@ -47,7 +58,8 @@ public class Enemy : Agent
     }
     protected override void AttackJumpExit()
     {
-        //throw new System.NotImplementedException();
+        if (!Attacking)
+            _animator.SetTrigger("AttackExit");
     }
 
 
@@ -65,14 +77,17 @@ public class Enemy : Agent
                 ChangeStateTo(State.Idle);
                 break;
             case true:
+                if (MathExt.Roll(4) && _animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1)
+                    ChangeStateTo(State.AttackHeavy);
                 break;
         }
-
-
     }
     protected override void AttackLightExit()
     {
-        _animator.SetTrigger("AttackExit");
+        if (!Attacking)
+            _animator.SetTrigger("AttackExit");
+
+        _animator.ResetTrigger("AttackLight");
 
     }
 
@@ -93,7 +108,11 @@ public class Enemy : Agent
 
     protected override void IdleEnter()
     {
+        //Cleanup any attack overlaps
+        _animator.ResetTrigger("AttackEnter");
+        //trigger walking in 2 sec
         SetStateAlarm(2f, State.Walk);
+        //set the horizontal movement to 0
         _moveDir.x = 0;
     }
 
@@ -138,7 +157,12 @@ public class Enemy : Agent
 
     protected override void ProneEnter()
     {
-        //throw new System.NotImplementedException();
+        _animator.ResetTrigger("AttackHeavy");
+        _animator.ResetTrigger("AttackLight");
+        _animator.ResetTrigger("AttackEnter");
+        _animator.ResetTrigger("AttackExit");
+        _animator.SetTrigger("Stagger");
+        SetStateAlarm(_proneTime, State.Idle);
     }
     protected override void ProneStay()
     {
@@ -146,7 +170,10 @@ public class Enemy : Agent
     }
     protected override void ProneExit()
     {
-        //throw new System.NotImplementedException();
+        if (PlayerSeen())
+            ChangeStateTo(MathExt.Roll(3) ? State.AttackHeavy : State.AttackLight);
+        else
+            _animator.SetTrigger("AttackExit");
     }
 
 
@@ -171,7 +198,10 @@ public class Enemy : Agent
 
         if (PlayerSeen())
         {
-            ChangeStateTo(State.AttackLight);
+            if (MathExt.Roll(3))
+                ChangeStateTo(State.AttackHeavy);
+            else
+                ChangeStateTo(State.AttackLight);
         }
     }
     protected override void WalkExit()
@@ -199,15 +229,10 @@ public class Enemy : Agent
         nextStateAlarm.ResetAndPlay(t);
     }
 
-
     private bool PlayerSeen()
     {
         return Physics2D.Raycast(SightOrigin.position, FacingDirection, _sightDistance, _playerLayer);
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.DrawLine(SightOrigin.position, SightOrigin.position + _sightDistance * FacingDirection);
-    }
 
 }

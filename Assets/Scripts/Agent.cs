@@ -10,16 +10,16 @@ public abstract class Agent : MonoBehaviour
     [SerializeField] protected State _currentState;
     [SerializeField] protected Meter _healthMeter;
     [SerializeField] protected Meter _parryMeter;
-    [SerializeField] protected float _walkSpeed, _jumpHeight, _gravity;
+    [SerializeField] protected float _walkSpeed, _jumpHeight, _gravity, _proneTime;
     [SerializeField] LayerMask _groundLayer;
     [Header("Components")]
     [SerializeField] protected Collider2D _collider;
     [SerializeField] protected Rigidbody2D _rigidbody;
     [SerializeField] protected Animator _animator;
 
-    [SerializeField] private float _isGroundedDistance, _isGroundedRadius;
+    private float _isGroundedDistance, _isGroundedRadius;
 
-    [SerializeField] protected float _facingDirection = 1;
+    protected float _facingDirection = 1;
 
     private WaitForFixedUpdate waitForFixedUpdate = new WaitForFixedUpdate();
     #endregion
@@ -49,6 +49,7 @@ public abstract class Agent : MonoBehaviour
     /// </summary>
     public bool IsGrounded => Physics2D.CircleCast(transform.position, _isGroundedRadius, Vector2.down, _isGroundedDistance, _groundLayer);
 
+    public bool Attacking => _currentState == State.AttackLight || _currentState == State.AttackHeavy || _currentState == State.AttackJump;
 
 
     private void OnValidate()
@@ -80,7 +81,7 @@ public abstract class Agent : MonoBehaviour
     private void NextState()
     {
         StartCoroutine(_currentState.ToString());
-        Debug.Log($"Entered {_currentState.ToString()} state");
+        Debug.Log($"{name} entered {_currentState.ToString()} state");
     }
     #region Coroutines
     IEnumerator Idle()
