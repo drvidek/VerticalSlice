@@ -111,7 +111,7 @@ public class Enemy : Agent
         //Cleanup any attack overlaps
         _animator.ResetTrigger("AttackEnter");
         //trigger walking in 2 sec
-        SetStateAlarm(2f, State.Walk);
+        SetStateAlarm(2f, MathExt.Roll(4) ? State.Jump : State.Walk);
         //set the horizontal movement to 0
         _moveDir.x = 0;
     }
@@ -129,12 +129,25 @@ public class Enemy : Agent
     #region Jump
     protected override void JumpEnter()
     {
-        //throw new System.NotImplementedException();
+        //set the move direction's Y value to the jump power
+        _moveDir.y = _jumpHeight;
     }
     protected override void JumpStay()
     {
-        //throw new System.NotImplementedException();
+        //move forward as you jump
+        _moveDir.x = FacingDirection.x * _walkSpeed/2;
+        //apply gravity
+        _moveDir.y -= Gravity;
+        //move the agent
+        Move(_moveDir);
+        //face the right direction
+        transform.localScale = MathExt.ReplaceVectorValue(transform.localScale, VectorValue.x, _facingDirection);
+
+        //exit jump state if grounded
+        if (IsGrounded)
+            ChangeStateTo(State.Idle);
     }
+
     protected override void JumpExit()
     {
         //throw new System.NotImplementedException();
