@@ -8,6 +8,8 @@ public abstract class Agent : MonoBehaviour
     public enum State { Idle, Prone, Walk, Jump, AttackLight, AttackHeavy, AttackJump, Parry, Dead }
     #region Variables
     [SerializeField] protected State _currentState;
+    [SerializeField] protected bool _useFixedTime;
+    [SerializeField] protected bool _displayStateMachine;
     [SerializeField] protected Meter _healthMeter;
     [SerializeField] protected Meter _parryMeter;
     [SerializeField] protected float _walkSpeed, _jumpHeight, _gravity, _proneTime;
@@ -22,6 +24,7 @@ public abstract class Agent : MonoBehaviour
     protected float _facingDirection = 1;
 
     private WaitForFixedUpdate waitForFixedUpdate = new WaitForFixedUpdate();
+
     #endregion
 
     /// <summary>
@@ -43,14 +46,41 @@ public abstract class Agent : MonoBehaviour
     /// <summary>
     /// Returns gravity multiplied by fixed delta time
     /// </summary>
-    public float Gravity => _gravity * Time.fixedDeltaTime;
+    public float Gravity => _gravity * (_useFixedTime ? Time.fixedDeltaTime : Time.deltaTime);
     /// <summary>
     /// Returns true if a circlecast finds a collision underneath the rigidbody on Ground Layer
     /// </summary>
     public bool IsGrounded => Physics2D.CircleCast(transform.position, _isGroundedRadius, Vector2.down, _isGroundedDistance, _groundLayer);
 
+    /// <summary>
+    /// Returns true if the agent is in an attack state
+    /// </summary>
     public bool Attacking => _currentState == State.AttackLight || _currentState == State.AttackHeavy || _currentState == State.AttackJump;
 
+    private bool _forceFalseAnimationDone;
+
+    /// <summary>
+    /// Returns true if the current animation has played through once
+    /// </summary>
+    protected bool AnimationDone
+    {
+        get
+        {
+            if (_forceFalseAnimationDone)
+            {
+                _forceFalseAnimationDone = false;
+                return false;
+            }
+            if (_animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1)
+            {
+                _forceFalseAnimationDone = true;
+                return true;
+            }
+            return false;
+        }
+    }
+
+    public virtual bool IsParrying => _currentState == State.Parry;
 
     private void OnValidate()
     {
@@ -81,7 +111,7 @@ public abstract class Agent : MonoBehaviour
     private void NextState()
     {
         StartCoroutine(_currentState.ToString());
-        Debug.Log($"{name} entered {_currentState.ToString()} state");
+        if (_displayStateMachine) Debug.Log($"{name} entered {_currentState.ToString()} state");
     }
     #region Coroutines
     IEnumerator Idle()
@@ -91,7 +121,7 @@ public abstract class Agent : MonoBehaviour
         while (_currentState == State.Idle)
         {
             IdleStay();
-            yield return waitForFixedUpdate;
+            yield return _useFixedTime ? waitForFixedUpdate : null;
         }
         IdleExit();
         NextState();
@@ -102,7 +132,7 @@ public abstract class Agent : MonoBehaviour
         while (_currentState == State.Prone)
         {
             ProneStay();
-            yield return waitForFixedUpdate;
+            yield return _useFixedTime ? waitForFixedUpdate : null;
         }
         ProneExit();
         NextState();
@@ -113,7 +143,7 @@ public abstract class Agent : MonoBehaviour
         while (_currentState == State.Walk)
         {
             WalkStay();
-            yield return waitForFixedUpdate;
+            yield return _useFixedTime ? waitForFixedUpdate : null;
         }
         WalkExit();
         NextState();
@@ -124,7 +154,7 @@ public abstract class Agent : MonoBehaviour
         while (_currentState == State.Jump)
         {
             JumpStay();
-            yield return waitForFixedUpdate;
+            yield return _useFixedTime ? waitForFixedUpdate : null;
         }
         JumpExit();
         NextState();
@@ -135,7 +165,7 @@ public abstract class Agent : MonoBehaviour
         while (_currentState == State.AttackLight)
         {
             AttackLightStay();
-            yield return waitForFixedUpdate;
+            yield return _useFixedTime ? waitForFixedUpdate : null;
         }
         AttackLightExit();
         NextState();
@@ -146,7 +176,7 @@ public abstract class Agent : MonoBehaviour
         while (_currentState == State.AttackHeavy)
         {
             AttackHeavyStay();
-            yield return waitForFixedUpdate;
+            yield return _useFixedTime ? waitForFixedUpdate : null;
         }
         AttackHeavyExit();
         NextState();
@@ -157,7 +187,7 @@ public abstract class Agent : MonoBehaviour
         while (_currentState == State.AttackJump)
         {
             AttackJumpStay();
-            yield return waitForFixedUpdate;
+            yield return _useFixedTime ? waitForFixedUpdate : null;
         }
         AttackJumpExit();
         NextState();
@@ -168,7 +198,7 @@ public abstract class Agent : MonoBehaviour
         while (_currentState == State.Parry)
         {
             ParryStay();
-            yield return waitForFixedUpdate;
+            yield return _useFixedTime ? waitForFixedUpdate : null;
         }
         ParryExit();
         NextState();
@@ -179,7 +209,7 @@ public abstract class Agent : MonoBehaviour
         while (_currentState == State.Dead)
         {
             DeadStay();
-            yield return waitForFixedUpdate;
+            yield return _useFixedTime ? waitForFixedUpdate : null;
         }
         DeadExit();
         NextState();
@@ -303,12 +333,12 @@ public abstract class Agent : MonoBehaviour
     #endregion
 
     /// <summary>
-    /// Moves the agent using a Vector2 based on fixedDeltaTime
+    /// Moves the agent using a Vector2 over time
     /// </summary>
     /// <param name="moveDirection"></param>
     protected virtual void Move(Vector2 moveDirection)
     {
-        transform.Translate(moveDirection * Time.fixedDeltaTime);
+        transform.Translate(moveDirection * (_useFixedTime ? Time.fixedDeltaTime : Time.deltaTime));
     }
 
     /// <summary>
@@ -359,12 +389,12 @@ public abstract class Agent : MonoBehaviour
     }
 
     /// <summary>
-    /// Immediately change the agent's state
+    /// Immediately changes the agent's state (triggers Exit of the current state, then Enter and Stay of the new state)
     /// </summary>
-    /// <param name="state"></param>
-    protected void ChangeStateTo(State state)
+    /// <param name="newState"></param>
+    protected void ChangeStateTo(State newState)
     {
-        _currentState = state;
+        _currentState = newState;
     }
 
 }

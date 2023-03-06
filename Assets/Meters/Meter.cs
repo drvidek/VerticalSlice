@@ -36,6 +36,10 @@ public class Meter
     /// </summary>
     public float RateDown { get => _rateDown; }
     /// <summary>
+    /// Returns true if the meter is at or above maximum value
+    /// </summary>
+    public bool IsFull { get => _value >= _max; }
+    /// <summary>
     /// Returns true if the meter is at or below minimum value
     /// </summary>
     public bool IsEmpty { get => _value <= _min; }

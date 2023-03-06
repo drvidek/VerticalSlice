@@ -28,7 +28,7 @@ public class Weapon : MonoBehaviour
                 _agentsHit.Add(agent);
 
                 //if not parrying or facing the wrong way
-                if (agent.CurrentState != Agent.State.Parry || !agent.IsFacing(_owner))
+                if (!agent.IsParrying || !agent.IsFacing(_owner))
                 {
                     //take damage
                     agent.TakeDamage(_attackPower);

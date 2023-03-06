@@ -569,6 +569,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _currentState: 0
+  _useFixedTime: 1
   _healthMeter:
     _min: 0
     _max: 2
