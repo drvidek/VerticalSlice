@@ -95,9 +95,9 @@ public abstract class Agent : MonoBehaviour
     protected virtual void Start()
     {
         //sets the state to dead if health reaches 0
-        _healthMeter.onMin += () => _currentState = State.Dead;
+        _healthMeter.onMin += () => ChangeStateTo(State.Dead);
         //sets the state to prone if parry power runs out
-        _parryMeter.onMin += () => _currentState = State.Prone;
+        _parryMeter.onMin += () => ChangeStateTo(State.Prone);
 
         _isGroundedDistance = _collider.bounds.extents.y / 2f + 0.01f;
         _isGroundedRadius = _collider.bounds.extents.x;

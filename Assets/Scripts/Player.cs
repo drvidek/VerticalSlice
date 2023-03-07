@@ -17,6 +17,12 @@ public class Player : Agent
 
     override public bool IsParrying => _currentState == State.Parry || _currentState == State.Idle;
 
+    override protected void Start()
+    {
+        Alarm.SetFromInspector(_proneAlarm);
+        base.Start();
+    }
+
     private void Update()
     {
         _rigidbody.velocity = Vector3.zero;
@@ -144,7 +150,7 @@ public class Player : Agent
 
     protected override void JumpStay()
     {
-        _moveDir.x = InputHorizontal * _walkSpeed * 2 / 3;
+        _moveDir.x = InputHorizontal * _walkSpeed;
         _moveDir.y -= Gravity;
 
         Move(_moveDir);
@@ -175,18 +181,19 @@ public class Player : Agent
 
     protected override void ProneEnter()
     {
-        _proneAlarm.onComplete = () => ChangeStateTo(State.Idle);
+        _animator.ResetTrigger("Parry");
         _proneAlarm.ResetAndPlay(_proneTime);
     }
 
     protected override void ProneExit()
     {
-        //throw new System.NotImplementedException();
+        _parryMeter.Fill();
     }
 
     protected override void ProneStay()
     {
-        //throw new System.NotImplementedException();
+        if (_proneAlarm.TimeRemaining == 0)
+            ChangeStateTo(State.Idle);
     }
 
     protected override void WalkEnter()
